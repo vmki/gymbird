@@ -21,7 +21,7 @@ async fn main() -> anyhow::Result<()> {
 
     println!("{:#?}", credentials);
 
-    let _db = Database::connect(credentials).await?;
+    let db = Database::connect(credentials).await?;
 
     let task = warp::path("test")
         .and(warp::path::param::<i32>())

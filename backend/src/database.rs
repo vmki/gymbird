@@ -1,5 +1,18 @@
 use tokio_postgres::{connect, NoTls};
 
+const WORKOUT_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS workouts(\
+name TEXT,\
+owner_id TEXT,\
+id TEXT\
+);";
+
+const EXERCISE_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS exercises (\
+workout_id TEXT,\
+idx SMALLINT,\
+name TEXT,\
+muscles_trained TEXT\
+);";
+
 #[derive(Debug, Clone)]
 pub struct Credentials<'a> {
     pub username: &'a str,
@@ -34,12 +47,8 @@ impl Database {
     }
 
     async fn check_and_initialize_tables(client: &tokio_postgres::Client) -> anyhow::Result<()> {
-        client
-            .query(
-                "CREATE TABLE IF NOT EXISTS workouts (name TEXT, owner TEXT);",
-                &[],
-            )
-            .await?;
+        client.query(WORKOUT_TABLE_CREATION_STR, &[]).await?;
+        client.query(EXERCISE_TABLE_CREATION_STR, &[]).await?;
         Ok(())
     }
 
