@@ -1,3 +1,4 @@
+use crate::user::{User, UUID};
 use tokio_postgres::{connect, NoTls};
 
 const WORKOUT_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS workouts(\
@@ -11,6 +12,18 @@ workout_id TEXT,\
 idx SMALLINT,\
 name TEXT,\
 muscles_trained TEXT\
+);";
+
+const USER_ACCOUNT_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS user_accounts(\
+email TEXT,\
+password TEXT,\
+user_id TEXT\
+);";
+
+const USER_PROFILE_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS user_profiles(\
+name TEXT,\
+username TEXT,\
+user_id TEXT\
 );";
 
 #[derive(Debug, Clone)]
@@ -49,7 +62,13 @@ impl Database {
     async fn check_and_initialize_tables(client: &tokio_postgres::Client) -> anyhow::Result<()> {
         client.query(WORKOUT_TABLE_CREATION_STR, &[]).await?;
         client.query(EXERCISE_TABLE_CREATION_STR, &[]).await?;
+        client.query(USER_ACCOUNT_TABLE_CREATION_STR, &[]).await?;
+        client.query(USER_PROFILE_TABLE_CREATION_STR, &[]).await?;
         Ok(())
+    }
+
+    pub async fn get_user(&self, uuid: UUID) -> User {
+        unimplemented!()
     }
 
     pub fn inner(&self) -> &tokio_postgres::Client {
