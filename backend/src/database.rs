@@ -1,29 +1,30 @@
-use crate::user::{User, UUID};
+use crate::user::*;
+use std::error::Error;
 use tokio_postgres::{connect, NoTls};
 
 const WORKOUT_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS workouts(\
-name TEXT,\
-owner_id TEXT,\
-id TEXT\
+name TEXT NOT NULL,\
+owner_id TEXT NOT NULL,\
+id TEXT PRIMARY KEY\
 );";
 
 const EXERCISE_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS exercises (\
-workout_id TEXT,\
-idx SMALLINT,\
-name TEXT,\
-muscles_trained TEXT\
+workout_id TEXT NOT NULL,\
+idx SMALLINT NOT NULL,\
+name TEXT NOT NULL,\
+muscles_trained TEXT NOT NULL\
 );";
 
 const USER_ACCOUNT_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS user_accounts(\
-email TEXT,\
-password TEXT,\
-user_id TEXT\
+email TEXT UNIQUE NOT NULL,\
+password TEXT NOT NULL,\
+user_id TEXT PRIMARY KEY\
 );";
 
 const USER_PROFILE_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS user_profiles(\
-name TEXT,\
-username TEXT,\
-user_id TEXT\
+name TEXT NOT NULL,\
+username TEXT UNIQUE NOT NULL,\
+user_id TEXT PRIMARY KEY\
 );";
 
 #[derive(Debug, Clone)]
@@ -67,8 +68,22 @@ impl Database {
         Ok(())
     }
 
-    pub async fn get_user(&self, uuid: UUID) -> User {
-        unimplemented!()
+    pub async fn get_user(&self, uuid: UUID) -> Result<User, Box<dyn Error>> {
+        let profile = UserProfile::from(
+            &self
+                .inner
+                .query("SELECT * FROM user_profiles WHERE user_id = $1", &[&uuid])
+                .await?[0],
+        );
+
+        let account = UserAccount::from(
+            &self
+                .inner
+                .query("SELECT * FROM user_accounts WHERE user_id = $1", &[&uuid])
+                .await?[0],
+        );
+
+        Ok(User::from((account, profile)))
     }
 
     pub fn inner(&self) -> &tokio_postgres::Client {
