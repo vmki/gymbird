@@ -2,6 +2,7 @@ import Head from 'next/head'
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import LoginModal from '../components/LoginModal';
+import RegistrationModal from '../components/RegistrationModal';
 import styles from '../styles/Home.module.css'
 
 interface User {
@@ -9,7 +10,21 @@ interface User {
 
 const Home: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showRegistration, setShowRegistration] = useState(false);
+
+  const login = async (email: string, password: string) => {
+    let result = await fetch("http://localhost:8080/api/login", {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password })
+    });
+
+    let json = await result.json();
+
+    console.log(JSON.parse(json));
+  }
+
 
   return (
     <div className={styles.container}>
@@ -19,17 +34,28 @@ const Home: React.FC = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Navbar />
+      <Navbar
+        onLogin={() => setShowLogin(true) }
+        onRegister={() => setShowRegistration(true) }
+      />
 
       <main className={styles.main}>
         <h1>Hello</h1>
-        <button onClick={() => { setShowModal(!showModal) }}>Click</button>
-
+        <button onClick={() => { setShowLogin(!showLogin) }}>Login</button>
+        <button onClick={() => { setShowRegistration(!showRegistration) }}>Register</button>
 
         <div id="modal-root" />
 
+        <RegistrationModal
+          onClose={() => setShowRegistration(false) }
+          onSubmit={(email, password) => login(email, password)}
+          show={showRegistration}
+        />
+
         <LoginModal
-          show={showModal}
+          onClose={() => setShowLogin(false) }
+          onSubmit={(email, password) => login(email, password)}
+          show={showLogin}
         />
       </main>
     </div>

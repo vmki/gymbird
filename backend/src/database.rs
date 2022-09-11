@@ -86,6 +86,15 @@ impl Database {
         Ok(User::from((account, profile)))
     }
 
+    pub async fn get_user_account(&self, email: String) -> Result<UserAccount, Box<dyn Error>> {
+        Ok(UserAccount::from(
+            &self
+                .inner
+                .query("SELECT * FROM user_accounts WHERE email = $1", &[&email])
+                .await?[0],
+        ))
+    }
+
     pub fn inner(&self) -> &tokio_postgres::Client {
         &self.inner
     }

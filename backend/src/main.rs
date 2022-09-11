@@ -1,44 +1,89 @@
-use backend::database::{Credentials, Database};
 use serde_json::to_string;
-use std::env;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use warp::hyper::{header, Method};
+use warp::http::header::{HeaderMap, HeaderValue};
+use warp::hyper::{header, Method, Request};
 use warp::{Filter, Rejection, Reply};
 
-async fn get_user(uuid: String, db: Arc<Mutex<Database>>) -> anyhow::Result<impl Reply, Rejection> {
-    let db = db.lock().await;
-    let user = db.get_user(uuid).await.unwrap();
+async fn get_user(uuid: String, state: models::State) -> anyhow::Result<impl Reply, Rejection> {
+    let state = state.lock().await;
+    let user = state.get_user(uuid).await.unwrap();
 
     Ok(warp::reply::json(&serde_json::to_string(&user).unwrap()))
 }
 
-fn get_var(var: &str) -> String {
-    env::var(var).expect(&format!("Couldn't find environment variable ${}.", var))
+async fn login(
+    params: models::LoginParameters,
+    state: models::State,
+) -> anyhow::Result<impl Reply, Rejection> {
+    println!("POST /api/login");
+    let state = state.lock().await;
+
+    let user_account = state
+        .get_user_account("balls@email.com".into())
+        .await
+        .unwrap();
+
+    Ok(warp::reply::json(
+        &serde_json::to_string(&user_account).unwrap(),
+    ))
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let credentials = Credentials {
-        username: &get_var("DB_USERNAME"),
-        db_name: &get_var("DB_NAME"),
-        host: &get_var("DB_HOST"),
-    };
+    let state: models::State = models::new_state().await?;
 
-    println!("{:#?}", credentials);
+    let state = warp::any().map(move || state.clone());
 
-    let db = Arc::new(Mutex::new(Database::connect(credentials).await?));
-
-    let db = warp::any().map(move || db.clone());
-
-    let task = warp::path("test")
+    let get_user_path = warp::path("user")
         .and(warp::path::param::<String>())
-        .and(db.clone())
+        .and(state.clone())
         .and_then(get_user);
 
-    let api_routes = warp::path("api").and(task);
+    let login_path = warp::path("login")
+        .and(warp::post())
+        .and(warp::body::json())
+        .and(state.clone())
+        .and_then(login);
+
+    let api_routes = warp::path("api").and(get_user_path.or(login_path)).with(
+        warp::cors()
+            .allow_any_origin()
+            .allow_methods(&[Method::POST, Method::GET, Method::PUT])
+            .allow_header("content-type"),
+    );
 
     println!("Starting warp.");
 
     Ok(warp::serve(api_routes).run(([127, 0, 0, 1], 8080)).await)
+}
+
+mod models {
+    use backend::database::{Credentials, Database};
+    use serde::{Deserialize, Serialize};
+    use std::env;
+    use std::sync::Arc;
+    use tokio::sync::Mutex;
+
+    pub type State = Arc<Mutex<Database>>;
+
+    fn get_var(var: &str) -> String {
+        env::var(var).expect(&format!("Couldn't find environment variable ${}.", var))
+    }
+
+    pub async fn new_state() -> anyhow::Result<State> {
+        let credentials = Credentials {
+            username: &get_var("DB_USERNAME"),
+            db_name: &get_var("DB_NAME"),
+            host: &get_var("DB_HOST"),
+        };
+
+        println!("{:#?}", credentials);
+
+        Ok(Arc::new(Mutex::new(Database::connect(credentials).await?)))
+    }
+
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct LoginParameters {
+        pub email: String,
+        pub password: String,
+    }
 }

@@ -1,6 +1,29 @@
 .navbar {
   display: flex;
+  flex-direction: row;
   width: 100%;
+  align-items: center;
   border-bottom: 1px #ebebeb solid;
   background: #fff;
+  height: 3.5rem;
+  font-family: 'Inter';
+}
+
+.navbar button {
+  background: #fff;
+  border: none;
+  margin-left: 70px;
+  transition: ease-in;
+  transition-duration: 150ms;
+}
+
+.navbar button:hover {
+  cursor: pointer;
+  color: #fd5656;
+}
+
+.navbar * {
+  font-size: 16px;
+  font-family: 'Inter';
+  margin-left: 20px;
 }

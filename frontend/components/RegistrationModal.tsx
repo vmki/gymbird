@@ -1,14 +1,14 @@
 import ReactDOM from 'react-dom';
 import { useState } from 'react';
-import styles from '../styles/LoginModal.module.css';
+import styles from '../styles/RegistrationModal.module.css';
 
-export interface LoginModalProps {
+export interface RegistrationModalProps {
   show: boolean;
   onClose: () => void;
   onSubmit: (email: string, password: string) => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ show, onClose, onSubmit }: LoginModalProps) => {
+const RegistrationModal: React.FC<RegistrationModalProps> = ({ show, onClose, onSubmit }: RegistrationModalProps) => {
   let [showPassword, setShowPassword] = useState(false);
   let [password, setPassword] = useState("");
   let [email, setEmail] = useState("");
@@ -16,7 +16,21 @@ const LoginModal: React.FC<LoginModalProps> = ({ show, onClose, onSubmit }: Logi
   const modal = show ?
     <div className={styles.modalOverlay}>
       <div className={styles.modal}>
-        <h1>Log in</h1>
+        <h1>Register</h1>
+
+        <input
+          onChange={(e: any) => setEmail(e.target.value)}
+          type="text"
+          name="name"
+          placeholder="Name"
+        />
+
+        <input
+          onChange={(e: any) => setEmail(e.target.value)}
+          type="text"
+          name="username"
+          placeholder="Username"
+        />
 
         <input
           onChange={(e: any) => setEmail(e.target.value)}
@@ -42,7 +56,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ show, onClose, onSubmit }: Logi
         <button
           onClick={() => onSubmit(email, password)}
           className={styles.loginButton}
-        >Log in</button>
+        >Register</button>
       </div>
     </div> : null;
 
@@ -56,4 +70,4 @@ const LoginModal: React.FC<LoginModalProps> = ({ show, onClose, onSubmit }: Logi
   }
 }
 
-export default LoginModal;
+export default RegistrationModal;
