@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
+import LoginModal from '../components/LoginModal';
 import styles from '../styles/Home.module.css'
 
 interface User {
@@ -8,6 +9,7 @@ interface User {
 
 const Home: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   return (
     <div className={styles.container}>
@@ -21,6 +23,14 @@ const Home: React.FC = () => {
 
       <main className={styles.main}>
         <h1>Hello</h1>
+        <button onClick={() => { setShowModal(!showModal) }}>Click</button>
+
+
+        <div id="modal-root" />
+
+        <LoginModal
+          show={showModal}
+        />
       </main>
     </div>
   )
