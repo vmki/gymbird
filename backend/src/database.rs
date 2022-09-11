@@ -1,4 +1,5 @@
 use crate::user::*;
+use anyhow::Context;
 use std::error::Error;
 use tokio_postgres::{connect, NoTls};
 
@@ -15,16 +16,12 @@ name TEXT NOT NULL,\
 muscles_trained TEXT NOT NULL\
 );";
 
-const USER_ACCOUNT_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS user_accounts(\
+const USER_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS users(\
 email TEXT UNIQUE NOT NULL,\
 password TEXT NOT NULL,\
-user_id TEXT PRIMARY KEY\
-);";
-
-const USER_PROFILE_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS user_profiles(\
 name TEXT NOT NULL,\
 username TEXT UNIQUE NOT NULL,\
-user_id TEXT PRIMARY KEY\
+id TEXT PRIMARY KEY\
 );";
 
 #[derive(Debug, Clone)]
@@ -63,36 +60,19 @@ impl Database {
     async fn check_and_initialize_tables(client: &tokio_postgres::Client) -> anyhow::Result<()> {
         client.query(WORKOUT_TABLE_CREATION_STR, &[]).await?;
         client.query(EXERCISE_TABLE_CREATION_STR, &[]).await?;
-        client.query(USER_ACCOUNT_TABLE_CREATION_STR, &[]).await?;
-        client.query(USER_PROFILE_TABLE_CREATION_STR, &[]).await?;
+        client.query(USER_TABLE_CREATION_STR, &[]).await?;
         Ok(())
     }
 
-    pub async fn get_user(&self, uuid: UUID) -> Result<User, Box<dyn Error>> {
-        let profile = UserProfile::from(
-            &self
-                .inner
-                .query("SELECT * FROM user_profiles WHERE user_id = $1", &[&uuid])
-                .await?[0],
-        );
+    pub async fn get_user_by_email(&self, email: String) -> anyhow::Result<User> {
+        let rows = self
+            .inner
+            .query("SELECT * FROM users WHERE email = $1", &[&email])
+            .await?;
 
-        let account = UserAccount::from(
-            &self
-                .inner
-                .query("SELECT * FROM user_accounts WHERE user_id = $1", &[&uuid])
-                .await?[0],
-        );
+        let row = rows.get(0).context("User not found.")?;
 
-        Ok(User::from((account, profile)))
-    }
-
-    pub async fn get_user_account(&self, email: String) -> Result<UserAccount, Box<dyn Error>> {
-        Ok(UserAccount::from(
-            &self
-                .inner
-                .query("SELECT * FROM user_accounts WHERE email = $1", &[&email])
-                .await?[0],
-        ))
+        Ok(User::from(row))
     }
 
     pub fn inner(&self) -> &tokio_postgres::Client {

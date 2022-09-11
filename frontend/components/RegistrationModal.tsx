@@ -1,17 +1,20 @@
 import ReactDOM from 'react-dom';
 import { useState } from 'react';
 import styles from '../styles/RegistrationModal.module.css';
+import { RegistrationParameters } from '../types';
 
 export interface RegistrationModalProps {
   show: boolean;
   onClose: () => void;
-  onSubmit: (email: string, password: string) => void;
+  onSubmit: (p: RegistrationParameters) => void;
 }
 
 const RegistrationModal: React.FC<RegistrationModalProps> = ({ show, onClose, onSubmit }: RegistrationModalProps) => {
   let [showPassword, setShowPassword] = useState(false);
   let [password, setPassword] = useState("");
   let [email, setEmail] = useState("");
+  let [name, setName] = useState("");
+  let [username, setUsername] = useState("");
 
   const modal = show ?
     <div className={styles.modalOverlay}>
@@ -19,14 +22,14 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ show, onClose, on
         <h1>Register</h1>
 
         <input
-          onChange={(e: any) => setEmail(e.target.value)}
+          onChange={(e: any) => setName(e.target.value)}
           type="text"
           name="name"
           placeholder="Name"
         />
 
         <input
-          onChange={(e: any) => setEmail(e.target.value)}
+          onChange={(e: any) => setUsername(e.target.value)}
           type="text"
           name="username"
           placeholder="Username"
@@ -40,9 +43,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ show, onClose, on
         />
 
         <input
-          onChange={(e: any) => {
-            setPassword(e.target.value)
-          }}
+          onChange={(e: any) => setPassword(e.target.value)}
           type={showPassword ? "text" : "password"}
           name="name"
           placeholder="Password"
@@ -54,7 +55,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ show, onClose, on
         >{showPassword ? "Hide password" : "Show Password"}</button>
 
         <button
-          onClick={() => onSubmit(email, password)}
+          onClick={() => onSubmit({ username: username, name: name, email: email, password: password })}
           className={styles.loginButton}
         >Register</button>
       </div>

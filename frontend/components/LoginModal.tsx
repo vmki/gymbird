@@ -1,11 +1,12 @@
 import ReactDOM from 'react-dom';
 import { useState } from 'react';
 import styles from '../styles/LoginModal.module.css';
+import { LoginParameters} from '../types';
 
 export interface LoginModalProps {
   show: boolean;
   onClose: () => void;
-  onSubmit: (email: string, password: string) => void;
+  onSubmit: (params: LoginParameters) => void;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ show, onClose, onSubmit }: LoginModalProps) => {
@@ -40,7 +41,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ show, onClose, onSubmit }: Logi
         >{showPassword ? "Hide password" : "Show Password"}</button>
 
         <button
-          onClick={() => onSubmit(email, password)}
+          onClick={() => onSubmit({ email: email, password: password })}
           className={styles.loginButton}
         >Log in</button>
       </div>

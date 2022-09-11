@@ -3,13 +3,6 @@ use warp::http::header::{HeaderMap, HeaderValue};
 use warp::hyper::{header, Method, Request};
 use warp::{Filter, Rejection, Reply};
 
-async fn get_user(uuid: String, state: models::State) -> anyhow::Result<impl Reply, Rejection> {
-    let state = state.lock().await;
-    let user = state.get_user(uuid).await.unwrap();
-
-    Ok(warp::reply::json(&serde_json::to_string(&user).unwrap()))
-}
-
 async fn login(
     params: models::LoginParameters,
     state: models::State,
@@ -17,7 +10,7 @@ async fn login(
     println!("POST /api/login: {:?}", params);
     let state = state.lock().await;
 
-    let user_account = state.get_user_account(params.email).await.unwrap();
+    let user_account = state.get_user_by_email(params.email).await.unwrap();
 
     Ok(warp::reply::json(
         &serde_json::to_string(&user_account).unwrap(),
@@ -30,18 +23,13 @@ async fn main() -> anyhow::Result<()> {
 
     let state = warp::any().map(move || state.clone());
 
-    let get_user_path = warp::path("user")
-        .and(warp::path::param::<String>())
-        .and(state.clone())
-        .and_then(get_user);
-
     let login_path = warp::path("login")
         .and(warp::post())
         .and(warp::body::json())
         .and(state.clone())
         .and_then(login);
 
-    let api_routes = warp::path("api").and(get_user_path.or(login_path)).with(
+    let api_routes = warp::path("api").and(login_path).with(
         warp::cors()
             .allow_any_origin()
             .allow_methods(&[Method::POST, Method::GET, Method::PUT])
