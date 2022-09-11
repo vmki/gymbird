@@ -14,13 +14,10 @@ async fn login(
     params: models::LoginParameters,
     state: models::State,
 ) -> anyhow::Result<impl Reply, Rejection> {
-    println!("POST /api/login");
+    println!("POST /api/login: {:?}", params);
     let state = state.lock().await;
 
-    let user_account = state
-        .get_user_account("balls@email.com".into())
-        .await
-        .unwrap();
+    let user_account = state.get_user_account(params.email).await.unwrap();
 
     Ok(warp::reply::json(
         &serde_json::to_string(&user_account).unwrap(),
