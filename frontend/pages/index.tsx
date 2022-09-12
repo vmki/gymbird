@@ -64,7 +64,7 @@ const Home: React.FC = () => {
 
         <RegistrationModal
           onClose={() => setShowRegistration(false) }
-          onSubmit={(params: RegistrationParameters) => login(email, password)}
+          onSubmit={(params: RegistrationParameters) => register(params)}
           show={showRegistration}
         />
 

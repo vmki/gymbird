@@ -16,7 +16,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ show, onClose, on
   let [name, setName] = useState("");
   let [username, setUsername] = useState("");
 
-  const modal = show ?
+  const modal = show && typeof window !== "undefined" ?
     <div className={styles.modalOverlay}>
       <div className={styles.modal}>
         <h1>Register</h1>

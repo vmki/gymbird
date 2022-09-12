@@ -1,3 +1,4 @@
+use crate::models::RegistrationParameters;
 use crate::user::*;
 use anyhow::Context;
 use std::error::Error;
@@ -73,6 +74,23 @@ impl Database {
         let row = rows.get(0).context("User not found.")?;
 
         Ok(User::from(row))
+    }
+
+    pub async fn create_user(&self, data: RegistrationParameters) -> anyhow::Result<User> {
+        self.inner
+            .query(
+                "INSERT INTO users (email, password, name, username, user_id) VALUES($1, $2, $3, $4, $5)",
+                &[
+                    &data.email,
+                    &data.password,
+                    &data.name,
+                    &data.username,
+                    &"246",
+                ],
+            )
+            .await?;
+
+        Ok(self.get_user_by_email(data.email).await?)
     }
 
     pub fn inner(&self) -> &tokio_postgres::Client {
