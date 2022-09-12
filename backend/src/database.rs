@@ -59,9 +59,10 @@ impl Database {
     }
 
     async fn check_and_initialize_tables(client: &tokio_postgres::Client) -> anyhow::Result<()> {
-        client.query(WORKOUT_TABLE_CREATION_STR, &[]).await?;
-        client.query(EXERCISE_TABLE_CREATION_STR, &[]).await?;
-        client.query(USER_TABLE_CREATION_STR, &[]).await?;
+        // Execute table creation strings to check if the required SQL tables exist
+        client.execute(WORKOUT_TABLE_CREATION_STR, &[]).await?;
+        client.execute(EXERCISE_TABLE_CREATION_STR, &[]).await?;
+        client.execute(USER_TABLE_CREATION_STR, &[]).await?;
         Ok(())
     }
 

@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom';
 import { useState } from 'react';
 import styles from '../styles/RegistrationModal.module.css';
-import { RegistrationParameters } from '../types';
+import { RegistrationParameters } from '../data';
 
 export interface RegistrationModalProps {
   show: boolean;
@@ -11,12 +11,13 @@ export interface RegistrationModalProps {
 
 const RegistrationModal: React.FC<RegistrationModalProps> = ({ show, onClose, onSubmit }: RegistrationModalProps) => {
   let [showPassword, setShowPassword] = useState(false);
+
   let [password, setPassword] = useState("");
   let [email, setEmail] = useState("");
   let [name, setName] = useState("");
   let [username, setUsername] = useState("");
 
-  const modal = show && typeof window !== "undefined" ?
+  const modal = show ?
     <div className={styles.modalOverlay}>
       <div className={styles.modal}>
         <h1>Register</h1>
@@ -55,7 +56,12 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ show, onClose, on
         >{showPassword ? "Hide password" : "Show Password"}</button>
 
         <button
-          onClick={() => onSubmit({ username: username, name: name, email: email, password: password })}
+          onClick={() => onSubmit({
+            username: username,
+            name: name,
+            email: email,
+            password: password
+          })}
           className={styles.loginButton}
         >Register</button>
       </div>

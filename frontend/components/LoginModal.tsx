@@ -1,7 +1,7 @@
 import ReactDOM from 'react-dom';
 import { useState } from 'react';
 import styles from '../styles/LoginModal.module.css';
-import { LoginParameters} from '../types';
+import { LoginParameters } from '../data';
 
 export interface LoginModalProps {
   show: boolean;
@@ -11,6 +11,7 @@ export interface LoginModalProps {
 
 const LoginModal: React.FC<LoginModalProps> = ({ show, onClose, onSubmit }: LoginModalProps) => {
   let [showPassword, setShowPassword] = useState(false);
+
   let [password, setPassword] = useState("");
   let [email, setEmail] = useState("");
 
@@ -27,9 +28,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ show, onClose, onSubmit }: Logi
         />
 
         <input
-          onChange={(e: any) => {
-            setPassword(e.target.value)
-          }}
+          onChange={(e: any) => setPassword(e.target.value) }
           type={showPassword ? "text" : "password"}
           name="name"
           placeholder="Password"

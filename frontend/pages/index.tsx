@@ -4,12 +4,13 @@ import Navbar from '../components/Navbar';
 import LoginModal from '../components/LoginModal';
 import RegistrationModal from '../components/RegistrationModal';
 import styles from '../styles/Home.module.css'
-import { LoginParameters, RegistrationParameters } from '../types';
 
-interface User {
-  name: string;
-  username: string;
-}
+import {
+  User,
+  API_BASE_URL,
+  LoginParameters,
+  RegistrationParameters
+} from '../data';
 
 const Home: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -17,7 +18,7 @@ const Home: React.FC = () => {
   const [showRegistration, setShowRegistration] = useState(false);
 
   const login = async (p: LoginParameters) => {
-    let result = await fetch("http://localhost:8080/api/login", {
+    let result = await fetch(`${API_BASE_URL}/login`, {
       method: "POST",
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(p),
@@ -25,12 +26,11 @@ const Home: React.FC = () => {
 
     let json = await result.json();
 
-    console.log(JSON.parse(json));
-
+    setUser(JSON.parse(json));
   }
 
   const register = async (p: RegistrationParameters) => {
-    let result = await fetch("http://localhost:8080/api/register", {
+    let result = await fetch(`${API_BASE_URL}/register`, {
       method: "POST",
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(p)
@@ -38,7 +38,7 @@ const Home: React.FC = () => {
 
     let json = await result.json();
 
-    console.log(JSON.parse(json));
+    setUser(JSON.parse(json));
   }
 
 
