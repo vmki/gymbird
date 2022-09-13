@@ -26,3 +26,7 @@ features = ["full"]
 [dependencies.chrono]
 version = "0.4"
 features = ["serde"]
+
+[dependencies.uuid]
+version = "1.1.2"
+features = ["v4", "fast-rng"]

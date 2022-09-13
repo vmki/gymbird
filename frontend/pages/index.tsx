@@ -41,6 +41,38 @@ const Home: React.FC = () => {
     setUser(JSON.parse(json));
   }
 
+  let main = user ? (
+    <div>
+      <h1>Hello {user.name}</h1>
+    </div>
+  ) : (
+    <main className={styles.main}>
+      <h1>Hello</h1>
+      <button onClick={() => { setShowLogin(!showLogin) }}>Login</button>
+      <button onClick={() => { setShowRegistration(!showRegistration) }}>Register</button>
+
+      <div id="modal-root" />
+
+      <RegistrationModal
+        onClose={() => setShowRegistration(false) }
+        onSubmit={(params: RegistrationParameters) => {
+          register(params)
+          setShowRegistration(false);
+        }}
+        show={showRegistration}
+      />
+
+      <LoginModal
+        onClose={() => setShowLogin(false) }
+        onSubmit={(params: LoginParameters) => {
+          login(params);
+          setShowLogin(false);
+        }}
+        show={showLogin}
+      />
+    </main>
+  );
+
 
   return (
     <div className={styles.container}>
@@ -55,25 +87,8 @@ const Home: React.FC = () => {
         onRegister={() => setShowRegistration(true) }
       />
 
-      <main className={styles.main}>
-        <h1>Hello</h1>
-        <button onClick={() => { setShowLogin(!showLogin) }}>Login</button>
-        <button onClick={() => { setShowRegistration(!showRegistration) }}>Register</button>
+      { main }
 
-        <div id="modal-root" />
-
-        <RegistrationModal
-          onClose={() => setShowRegistration(false) }
-          onSubmit={(params: RegistrationParameters) => register(params)}
-          show={showRegistration}
-        />
-
-        <LoginModal
-          onClose={() => setShowLogin(false) }
-          onSubmit={(params: LoginParameters) => login(params)}
-          show={showLogin}
-        />
-      </main>
     </div>
   )
 }

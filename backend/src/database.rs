@@ -3,6 +3,7 @@ use crate::user::*;
 use anyhow::Context;
 use std::error::Error;
 use tokio_postgres::{connect, NoTls};
+use uuid::Uuid;
 
 const WORKOUT_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS workouts(\
 name TEXT NOT NULL,\
@@ -78,6 +79,8 @@ impl Database {
     }
 
     pub async fn create_user(&self, data: RegistrationParameters) -> anyhow::Result<User> {
+        let id = Uuid::new_v4().to_string();
+
         self.inner
             .query(
                 "INSERT INTO users (email, password, name, username, user_id) VALUES($1, $2, $3, $4, $5)",
@@ -86,7 +89,7 @@ impl Database {
                     &data.password,
                     &data.name,
                     &data.username,
-                    &"246",
+                    &id
                 ],
             )
             .await?;
