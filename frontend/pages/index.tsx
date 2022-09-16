@@ -1,9 +1,10 @@
 import Head from 'next/head'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import LoginModal from '../components/LoginModal';
 import RegistrationModal from '../components/RegistrationModal';
 import styles from '../styles/Home.module.css'
+import useStore from '../store';
 
 import {
   User,
@@ -13,9 +14,18 @@ import {
 } from '../data';
 
 const Home: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [showRegistration, setShowRegistration] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  let store: any = useStore();
+  console.log(store);
+
+  useEffect(() => {
+    if(store.sessionToken !== null) {
+      fetchUser(store.sessionToken);
+    }
+  }, [])
 
   const login = async (p: LoginParameters) => {
     let result = await fetch(`${API_BASE_URL}/login`, {
@@ -24,9 +34,20 @@ const Home: React.FC = () => {
       body: JSON.stringify(p),
     });
 
-    let json = await result.json();
+    let json = JSON.parse(await result.json());
 
-    setUser(JSON.parse(json));
+    store.setToken(json.sessionToken);
+    console.log(store);
+  }
+
+  const fetchUser = async(token: string) => {
+    if(store.sessionToken !== null) {
+      fetch(`${API_BASE_URL}/user`, {
+        headers: {
+          'Authorization': token,
+        }
+      }).then(res => res.json()).then(res => setUser(JSON.parse(res)));
+    }
   }
 
   const register = async (p: RegistrationParameters) => {
