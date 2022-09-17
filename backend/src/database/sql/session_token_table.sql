@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS session_tokens (
+user_id TEXT PRIMARY KEY,
+token TEXT UNIQUE NOT NULL
+);

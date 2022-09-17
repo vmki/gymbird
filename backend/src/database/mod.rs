@@ -10,31 +10,10 @@ use argon2::{
     Argon2,
 };
 
-const WORKOUT_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS workouts(\
-name TEXT NOT NULL,\
-owner_id TEXT NOT NULL,\
-id TEXT PRIMARY KEY\
-);";
-
-const EXERCISE_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS exercises (\
-workout_id TEXT NOT NULL,\
-idx SMALLINT NOT NULL,\
-name TEXT NOT NULL,\
-muscles_trained TEXT NOT NULL\
-);";
-
-const USER_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS users(\
-email TEXT UNIQUE NOT NULL,\
-password TEXT NOT NULL,\
-name TEXT NOT NULL,\
-username TEXT UNIQUE NOT NULL,\
-id TEXT PRIMARY KEY\
-);";
-
-const SESSION_TOKEN_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS session_tokens(\
-user_id TEXT PRIMARY KEY,\
-token TEXT UNIQUE NOT NULL\
-);";
+const WORKOUT_TABLE_CREATION_STR: &str = include_str!("sql/workout_table.sql");
+const EXERCISE_TABLE_CREATION_STR: &str = include_str!("sql/exercise_table.sql");
+const USER_TABLE_CREATION_STR: &str = include_str!("sql/user_table.sql");
+const SESSION_TOKEN_TABLE_CREATION_STR: &str = include_str!("sql/session_token_table.sql");
 
 #[derive(Debug, Clone)]
 pub struct Credentials<'a> {

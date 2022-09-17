@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS workouts (
+name TEXT NOT NULL,
+owner_id TEXT NOT NULL,
+id TEXT PRIMARY KEY
+);
