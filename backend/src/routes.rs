@@ -45,9 +45,9 @@ pub fn routes(
             if let Some(e) = err.find::<Error>() {
                 let error_message = e.to_string();
 
-                Ok(warp::reply::json(&json!({
+                Ok(warp::reply::json(&serde_json::to_string(&json!({
                     "error": error_message,
-                })))
+                })).unwrap()))
             } else {
                 Err(err)
             } 

@@ -3,6 +3,7 @@ use crate::models::{FetchUser, LoginParameters, RegistrationParameters};
 use anyhow::Context;
 use tokio_postgres::{connect, NoTls};
 use uuid::Uuid;
+use crate::error::Result;
 
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -53,11 +54,11 @@ impl Database {
         Ok(Self { inner: client })
     }
 
-    pub async fn login(&self, params: LoginParameters) -> anyhow::Result<SessionToken> {
+    pub async fn login(&self, params: LoginParameters) -> Result<SessionToken> {
         // Check if the email address in `params` is found in the database.
         let user = match self.get_user_by_email(params.email).await {
             Ok(u) => u,
-            Err(_) => return Err(anyhow::anyhow!("An invalid email was provided.")),
+            Err(_) => return Err(Error::InvalidEmail),
         };
 
         // Check if the password hash in the database matches the password inputted by the user.
@@ -65,17 +66,10 @@ impl Database {
         match Argon2::default().verify_password(params.password.as_bytes(), &parsed_hash) {
             // If it matches, generate a new session token, insert it into the database and return it.
             Ok(_) => {
-                let session_token = Uuid::new_v4().to_string();
-                self.inner
-                    .execute(
-                        "INSERT INTO session_tokens (user_id, token) VALUES($1, $2);",
-                        &[&user.user_id, &session_token],
-                    )
-                    .await
-                    .unwrap();
+                let session_token = self.generate_session_token(&user.user_id).await;
                 return Ok(session_token);
             }
-            Err(_) => return Err(anyhow::anyhow!("An invalid password was provided.")),
+            Err(_) => return Err(Error::InvalidPassword),
         }
     }
 
@@ -90,18 +84,20 @@ impl Database {
         Ok(())
     }
 
-    pub async fn get_user_by_email(&self, email: String) -> anyhow::Result<User> {
+    pub async fn get_user_by_email(&self, email: String) -> Result<User> {
         let rows = self
             .inner
             .query("SELECT * FROM users WHERE email = $1", &[&email])
             .await?;
 
-        let row = rows.get(0).context("User not found.")?;
+        match rows.get(0) {
+            Some(r) => Ok(User::from(r)),
+            None => Err(Error::InvalidEmail),
+        }
 
-        Ok(User::from(row))
     }
 
-    pub async fn create_user(&self, data: RegistrationParameters) -> anyhow::Result<User> {
+    pub async fn create_user(&self, data: RegistrationParameters) -> anyhow::Result<SessionToken> {
         let id = Uuid::new_v4().to_string();
 
         let salt = SaltString::generate(&mut OsRng);
@@ -124,13 +120,15 @@ impl Database {
             )
             .await?;
 
-        Ok(self.get_user_by_email(data.email).await?)
+        let session_token = self.generate_session_token(id).await;
+
+        Ok(session_token)
     }
 
-    pub async fn fetch_user(&self, session_token: SessionToken) -> anyhow::Result<FetchUser> {
+    pub async fn fetch_user(&self, session_token: SessionToken) -> Result<FetchUser> {
         let user_id = match self.authorize(session_token).await {
             Ok(uid) => uid,
-            Err(_) => return Err(anyhow::anyhow!("An invalid session token was provided.")),
+            Err(_) => return Err(Error::InvalidSessionToken),
         };
 
         Ok(FetchUser::from(
@@ -148,7 +146,7 @@ impl Database {
         }
     }
 
-    async fn authorize(&self, session_token: SessionToken) -> anyhow::Result<String> {
+    async fn authorize(&self, session_token: SessionToken) -> Result<String> {
         let rows = self
             .inner
             .query(
@@ -159,8 +157,23 @@ impl Database {
 
         match rows.get(0) {
             Some(row) => Ok(row.get("user_id")),
-            None => Err(anyhow::anyhow!("An invalid session token was provided.")),
+            None => Err(Error::InvalidSessionToken),
         }
+    }
+
+    async fn generate_session_token<T>(&self, user_id: T) -> String 
+        where T: AsRef<str>
+    {
+        let session_token = Uuid::new_v4().to_string();
+        self.inner
+            .execute(
+                "INSERT INTO session_tokens (user_id, token) VALUES($1, $2);",
+                &[&user_id.as_ref(), &session_token],
+            )
+            .await
+            .unwrap();
+
+        session_token
     }
 
     pub fn inner(&self) -> &tokio_postgres::Client {

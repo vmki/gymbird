@@ -1,19 +1,43 @@
 import ReactDOM from 'react-dom';
 import { useState } from 'react';
 import styles from '../styles/LoginModal.module.css';
-import { LoginParameters } from '../data';
+import { LoginParameters, API_BASE_URL } from '../data';
+import useStore from '../store';
 
 export interface LoginModalProps {
   show: boolean;
   onClose: () => void;
-  onSubmit: (params: LoginParameters) => void;
+  onSuccess: () => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ show, onClose, onSubmit }: LoginModalProps) => {
+const LoginModal: React.FC<LoginModalProps> = ({ show, onClose, onSuccess }: LoginModalProps) => {
   let [showPassword, setShowPassword] = useState(false);
 
   let [password, setPassword] = useState("");
   let [email, setEmail] = useState("");
+  let [error, setError] = useState<string | null>(null);
+
+  let store: any = useStore();
+
+  const login = async (p: LoginParameters) => {
+    return fetch(`${API_BASE_URL}/login`, {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(p),
+    }).then(res => res.json()).then(res => {
+      let data = JSON.parse(res);
+
+      if(data.error) {
+        setError(data.error);
+        return;
+      }
+
+      store.setToken(data.session_token);
+
+      onSuccess();
+    })
+  }
+
 
   const modal = show ?
     <div className={styles.modalOverlay}>
@@ -40,7 +64,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ show, onClose, onSubmit }: Logi
         >{showPassword ? "Hide password" : "Show Password"}</button>
 
         <button
-          onClick={() => onSubmit({ email: email, password: password })}
+          onClick={() => login({ email: email, password: password })}
           className={styles.loginButton}
         >Log in</button>
       </div>

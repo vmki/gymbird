@@ -2,7 +2,7 @@ pub mod fitness;
 pub use fitness::*;
 
 pub mod error;
-pub use error::Error;
+pub use error::{Error, Result};
 
 pub mod database;
 pub use database::user;

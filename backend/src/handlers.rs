@@ -10,13 +10,17 @@ pub async fn login(
     println!("POST /api/login: {:?}", params);
     let state = state.lock().await;
 
-    let session_token = state.login(params).await.unwrap();
+    match state.login(params).await {
+        Ok(token) => {
+            let json = json!({
+                "session_token": token,
+            }); 
 
-    let json = json!({
-        "session_token": session_token,
-    });
+            Ok(warp::reply::json(&serde_json::to_string(&json).unwrap()))
+        }
+        Err(e) => Err(warp::reject::custom(e))
+    }
 
-    Ok(warp::reply::json(&serde_json::to_string(&json).unwrap()))
 }
 
 pub async fn register(
@@ -26,11 +30,13 @@ pub async fn register(
     println!("POST /api/register: {:?}", params);
     let state = state.lock().await;
 
-    let user_account = state.create_user(params).await.unwrap();
+    let session_token = state.create_user(params).await.unwrap();
 
-    Ok(warp::reply::json(
-        &serde_json::to_string(&user_account).unwrap(),
-    ))
+    let json = json!({
+        "session_token": session_token,
+    }); 
+
+    Ok(warp::reply::json(&serde_json::to_string(&json).unwrap()))
 }
 
 pub async fn fetch_user(
@@ -40,7 +46,7 @@ pub async fn fetch_user(
     println!("GET /api/user: {}", token);
     let state = state.lock().await;
 
-    let user_account = state.fetch_user(token).await.unwrap();
+    let user_account = state.fetch_user(token).await?;
 
     Ok(warp::reply::json(
         &serde_json::to_string(&user_account).unwrap(),

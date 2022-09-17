@@ -6,12 +6,7 @@ import RegistrationModal from '../components/RegistrationModal';
 import styles from '../styles/Home.module.css'
 import useStore from '../store';
 
-import {
-  User,
-  API_BASE_URL,
-  LoginParameters,
-  RegistrationParameters
-} from '../data';
+import { User, API_BASE_URL } from '../data';
 
 const Home: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
@@ -19,24 +14,12 @@ const Home: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
 
   let store: any = useStore();
-  console.log(store);
 
   useEffect(() => {
     if(store.sessionToken !== null) {
-      fetchUser(store.sessionToken);
+      fetchUser();
     }
-  }, [])
-
-  const login = async (p: LoginParameters) => {
-    fetch(`${API_BASE_URL}/login`, {
-      method: "POST",
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(p),
-    }).then(res => res.json()).then(res => {
-      let data = JSON.parse(res);
-      store.setToken(data.session_token);
-    })
-  }
+  }, [store.sessionToken])
 
   const logOut = async(token: string | null) => {
     if(token !== null) {
@@ -50,26 +33,14 @@ const Home: React.FC = () => {
     }
   }
 
-  const fetchUser = async(token: string) => {
+  const fetchUser = async () => {
     if(store.sessionToken !== null) {
       fetch(`${API_BASE_URL}/user`, {
         headers: {
-          'Authorization': token,
+          'Authorization': store.sessionToken,
         }
       }).then(res => res.json()).then(res => setUser(JSON.parse(res)));
     }
-  }
-
-  const register = async (p: RegistrationParameters) => {
-    let result = await fetch(`${API_BASE_URL}/register`, {
-      method: "POST",
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(p)
-    });
-
-    let json = await result.json();
-
-    setUser(JSON.parse(json));
   }
 
   let main = (
@@ -82,17 +53,18 @@ const Home: React.FC = () => {
 
       <RegistrationModal
         onClose={() => setShowRegistration(false) }
-        onSubmit={(params: RegistrationParameters) => {
-          register(params)
+        onSuccess={() => {
+          console.log("sess", store);
           setShowRegistration(false);
+          fetchUser()
         }}
         show={showRegistration}
       />
 
       <LoginModal
         onClose={() => setShowLogin(false) }
-        onSubmit={(params: LoginParameters) => {
-          login(params);
+        onSuccess={async() => {
+          await fetchUser()
           setShowLogin(false);
         }}
         show={showLogin}

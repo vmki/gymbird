@@ -11,6 +11,7 @@ serde_json = "1.0"
 anyhow = "1.0.64"
 argon2 = "0.4"
 rand_core = { version = "0.6", features = ["std"] }
+thiserror = "1.0.35"
 
 [dependencies.serde]
 version = "1.0.144"

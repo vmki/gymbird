@@ -1,21 +1,48 @@
 import ReactDOM from 'react-dom';
 import { useState } from 'react';
 import styles from '../styles/RegistrationModal.module.css';
-import { RegistrationParameters } from '../data';
+import { RegistrationParameters, API_BASE_URL } from '../data';
+import useStore from '../store';
 
 export interface RegistrationModalProps {
   show: boolean;
   onClose: () => void;
-  onSubmit: (p: RegistrationParameters) => void;
+  onSuccess: () => void;
 }
 
-const RegistrationModal: React.FC<RegistrationModalProps> = ({ show, onClose, onSubmit }: RegistrationModalProps) => {
+const RegistrationModal: React.FC<RegistrationModalProps> = ({ show, onClose, onSuccess }: RegistrationModalProps) => {
   let [showPassword, setShowPassword] = useState(false);
 
   let [password, setPassword] = useState("");
   let [email, setEmail] = useState("");
   let [name, setName] = useState("");
   let [username, setUsername] = useState("");
+  let [error, setError] = useState<string | null>(null);
+
+  let store: any = useStore();
+  
+  const register = async (p: RegistrationParameters) => {
+    return fetch(`${API_BASE_URL}/register`, {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(p)
+    }).then(res => res.json()).then(res => {
+      let data = JSON.parse(res);
+      console.log(data);
+
+      if(data.error) {
+        setError(data.error);
+        return;
+      }
+
+      store.setToken(data.session_token);
+      onSuccess();
+
+      return null;
+
+    })
+  }
+
 
   const modal = show ?
     <div className={styles.modalOverlay}>
@@ -56,7 +83,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ show, onClose, on
         >{showPassword ? "Hide password" : "Show Password"}</button>
 
         <button
-          onClick={() => onSubmit({
+          onClick={() => register({
             username: username,
             name: name,
             email: email,
