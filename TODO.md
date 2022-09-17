@@ -1,4 +1,4 @@
 - [ ] Proper error handling in backend
 - [ ] Code organization and cleanup
-- [ ] Random user ID generation
-- [ ] Session tokens
+- [x] Random user ID generation
+- [x] Session tokens
