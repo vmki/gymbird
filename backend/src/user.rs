@@ -4,11 +4,11 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
-    name: String,
-    username: String,
-    user_id: UUID,
-    email: String,
-    password: Option<String>,
+    pub name: String,
+    pub username: String,
+    pub user_id: UUID,
+    pub email: String,
+    pub password: String,
 }
 
 impl From<&Row> for User {
@@ -18,7 +18,7 @@ impl From<&Row> for User {
             username: data.get("username"),
             user_id: data.get("user_id"),
             email: data.get("email"),
-            password: data.try_get("password").ok(),
+            password: data.get("password"),
         }
     }
 }

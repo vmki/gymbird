@@ -20,12 +20,18 @@ pub fn routes(
         .and(state.clone())
         .and_then(register);
 
+    let fetch_user_path = warp::path("user")
+        .and(warp::header("Authorization"))
+        .and(state.clone())
+        .and_then(fetch_user);
+
     let cors = warp::cors()
         .allow_any_origin()
         .allow_methods(&[Method::POST, Method::GET, Method::PUT])
-        .allow_header("content-type");
+        .allow_header("content-type")
+        .allow_header("authorization");
 
     warp::path("api")
-        .and(login_path.or(registration_path))
+        .and(login_path.or(registration_path).or(fetch_user_path))
         .with(cors)
 }

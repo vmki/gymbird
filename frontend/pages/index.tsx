@@ -28,16 +28,14 @@ const Home: React.FC = () => {
   }, [])
 
   const login = async (p: LoginParameters) => {
-    let result = await fetch(`${API_BASE_URL}/login`, {
+    fetch(`${API_BASE_URL}/login`, {
       method: "POST",
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(p),
-    });
-
-    let json = JSON.parse(await result.json());
-
-    store.setToken(json.sessionToken);
-    console.log(store);
+    }).then(res => res.json()).then(res => {
+      let data = JSON.parse(res);
+      store.setToken(data.session_token);
+    })
   }
 
   const fetchUser = async(token: string) => {

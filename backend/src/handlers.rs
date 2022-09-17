@@ -1,4 +1,5 @@
 use crate::models;
+use serde_json::json;
 use warp::{Filter, Rejection, Reply};
 
 pub async fn login(
@@ -8,11 +9,13 @@ pub async fn login(
     println!("POST /api/login: {:?}", params);
     let state = state.lock().await;
 
-    let user_account = state.get_user_by_email(params.email).await.unwrap();
+    let session_token = state.login(params).await.unwrap();
 
-    Ok(warp::reply::json(
-        &serde_json::to_string(&user_account).unwrap(),
-    ))
+    let json = json!({
+        "session_token": session_token,
+    });
+
+    Ok(warp::reply::json(&serde_json::to_string(&json).unwrap()))
 }
 
 pub async fn register(
@@ -23,6 +26,20 @@ pub async fn register(
     let state = state.lock().await;
 
     let user_account = state.create_user(params).await.unwrap();
+
+    Ok(warp::reply::json(
+        &serde_json::to_string(&user_account).unwrap(),
+    ))
+}
+
+pub async fn fetch_user(
+    token: String,
+    state: models::State,
+) -> anyhow::Result<impl Reply, Rejection> {
+    println!("GET /api/user: {}", token);
+    let state = state.lock().await;
+
+    let user_account = state.fetch_user(token).await.unwrap();
 
     Ok(warp::reply::json(
         &serde_json::to_string(&user_account).unwrap(),

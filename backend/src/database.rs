@@ -1,9 +1,14 @@
-use crate::models::RegistrationParameters;
+use crate::error::Error;
+use crate::models::{FetchUser, LoginParameters, RegistrationParameters};
 use crate::user::*;
 use anyhow::Context;
-use std::error::Error;
 use tokio_postgres::{connect, NoTls};
 use uuid::Uuid;
+
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
 
 const WORKOUT_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS workouts(\
 name TEXT NOT NULL,\
@@ -24,6 +29,11 @@ password TEXT NOT NULL,\
 name TEXT NOT NULL,\
 username TEXT UNIQUE NOT NULL,\
 id TEXT PRIMARY KEY\
+);";
+
+const SESSION_TOKEN_TABLE_CREATION_STR: &str = "CREATE TABLE IF NOT EXISTS session_tokens(\
+user_id TEXT PRIMARY KEY,\
+token TEXT UNIQUE NOT NULL\
 );";
 
 #[derive(Debug, Clone)]
@@ -59,11 +69,40 @@ impl Database {
         Ok(Self { inner: client })
     }
 
+    pub async fn login(&self, params: LoginParameters) -> anyhow::Result<String> {
+        // Check if the email address in `params` is found in the database.
+        let user = match self.get_user_by_email(params.email).await {
+            Ok(u) => u,
+            Err(_) => return Err(anyhow::anyhow!("An invalid email was provided.")),
+        };
+
+        // Check if the password hash in the database matches the password inputted by the user.
+        let parsed_hash = PasswordHash::new(&user.password).unwrap();
+        match Argon2::default().verify_password(params.password.as_bytes(), &parsed_hash) {
+            // If it matches, generate a new session token, insert it into the database and return it.
+            Ok(_) => {
+                let session_token = Uuid::new_v4().to_string();
+                self.inner
+                    .execute(
+                        "INSERT INTO session_tokens (user_id, token) VALUES($1, $2);",
+                        &[&user.user_id, &session_token],
+                    )
+                    .await
+                    .unwrap();
+                return Ok(session_token);
+            }
+            Err(_) => return Err(anyhow::anyhow!("An invalid password was provided.")),
+        }
+    }
+
     async fn check_and_initialize_tables(client: &tokio_postgres::Client) -> anyhow::Result<()> {
         // Execute table creation strings to check if the required SQL tables exist
         client.execute(WORKOUT_TABLE_CREATION_STR, &[]).await?;
         client.execute(EXERCISE_TABLE_CREATION_STR, &[]).await?;
         client.execute(USER_TABLE_CREATION_STR, &[]).await?;
+        client
+            .execute(SESSION_TOKEN_TABLE_CREATION_STR, &[])
+            .await?;
         Ok(())
     }
 
@@ -81,12 +120,19 @@ impl Database {
     pub async fn create_user(&self, data: RegistrationParameters) -> anyhow::Result<User> {
         let id = Uuid::new_v4().to_string();
 
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+        let password_hash = argon2
+            .hash_password(data.password.as_bytes(), &salt)
+            .unwrap()
+            .to_string();
+
         self.inner
             .query(
                 "INSERT INTO users (email, password, name, username, user_id) VALUES($1, $2, $3, $4, $5)",
                 &[
                     &data.email,
-                    &data.password,
+                    &password_hash,
                     &data.name,
                     &data.username,
                     &id
@@ -95,6 +141,36 @@ impl Database {
             .await?;
 
         Ok(self.get_user_by_email(data.email).await?)
+    }
+
+    pub async fn fetch_user(&self, session_token: String) -> anyhow::Result<FetchUser> {
+        let user_id = match self.authorize(session_token).await {
+            Ok(uid) => uid,
+            Err(_) => return Err(anyhow::anyhow!("An invalid session token was provided.")),
+        };
+
+        Ok(FetchUser::from(
+            &self
+                .inner
+                .query("SELECT * FROM users WHERE user_id = $1", &[&user_id])
+                .await
+                .unwrap()[0],
+        ))
+    }
+
+    async fn authorize(&self, session_token: String) -> anyhow::Result<String> {
+        let rows = self
+            .inner
+            .query(
+                "SELECT * FROM session_tokens WHERE token = $1",
+                &[&session_token],
+            )
+            .await?;
+
+        match rows.get(0) {
+            Some(row) => Ok(row.get("user_id")),
+            None => Err(anyhow::anyhow!("An invalid session token was provided.")),
+        }
     }
 
     pub fn inner(&self) -> &tokio_postgres::Client {

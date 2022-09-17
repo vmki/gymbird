@@ -1,8 +1,10 @@
 use crate::database::{Credentials, Database};
+use crate::user::UUID;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tokio_postgres::Row;
 
 pub type State = Arc<Mutex<Database>>;
 
@@ -34,4 +36,23 @@ pub struct RegistrationParameters {
     pub password: String,
     pub name: String,
     pub username: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FetchUser {
+    pub name: String,
+    pub username: String,
+    pub user_id: UUID,
+    pub email: String,
+}
+
+impl From<&Row> for FetchUser {
+    fn from(data: &Row) -> Self {
+        Self {
+            name: data.get("name"),
+            username: data.get("username"),
+            user_id: data.get("user_id"),
+            email: data.get("email"),
+        }
+    }
 }
