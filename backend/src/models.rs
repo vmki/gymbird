@@ -1,5 +1,5 @@
 use crate::database::{Credentials, Database};
-use crate::user::UUID;
+use crate::database::UUID;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::sync::Arc;

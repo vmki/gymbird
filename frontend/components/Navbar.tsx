@@ -4,9 +4,10 @@ import useStore from '../store';
 interface NavbarProps {
   onLogin: () => void;
   onRegister: () => void;
+  onLogout: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister})  => {
+const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onLogout })  => {
   let store = useStore();
 
   return (
@@ -17,6 +18,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister})  => {
         onLogin()
       }}>Log in</button>
       <button onClick={onRegister}>Register</button>
+      <button onClick={onLogout}>Log out</button>
     </div>
   )
 }

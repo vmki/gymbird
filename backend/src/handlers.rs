@@ -1,4 +1,5 @@
 use crate::models;
+use crate::database::SessionToken;
 use serde_json::json;
 use warp::{Filter, Rejection, Reply};
 
@@ -33,7 +34,7 @@ pub async fn register(
 }
 
 pub async fn fetch_user(
-    token: String,
+    token: SessionToken,
     state: models::State,
 ) -> anyhow::Result<impl Reply, Rejection> {
     println!("GET /api/user: {}", token);
@@ -44,4 +45,16 @@ pub async fn fetch_user(
     Ok(warp::reply::json(
         &serde_json::to_string(&user_account).unwrap(),
     ))
+}
+
+pub async fn log_out(
+    token: SessionToken,
+    state: models::State,
+) -> anyhow::Result<impl Reply, Rejection> {
+    println!("GET /api/logout: {}", token);
+    let state = state.lock().await;
+
+    state.log_out(token).await;
+
+    Ok(warp::reply::reply())
 }

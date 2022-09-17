@@ -1,6 +1,5 @@
 use crate::error::Error;
 use crate::models::{FetchUser, LoginParameters, RegistrationParameters};
-use crate::user::*;
 use anyhow::Context;
 use tokio_postgres::{connect, NoTls};
 use uuid::Uuid;
@@ -10,10 +9,16 @@ use argon2::{
     Argon2,
 };
 
+pub mod user;
+use user::*;
+
 const WORKOUT_TABLE_CREATION_STR: &str = include_str!("sql/workout_table.sql");
 const EXERCISE_TABLE_CREATION_STR: &str = include_str!("sql/exercise_table.sql");
 const USER_TABLE_CREATION_STR: &str = include_str!("sql/user_table.sql");
 const SESSION_TOKEN_TABLE_CREATION_STR: &str = include_str!("sql/session_token_table.sql");
+
+pub type UUID = String;
+pub type SessionToken = String;
 
 #[derive(Debug, Clone)]
 pub struct Credentials<'a> {
@@ -48,7 +53,7 @@ impl Database {
         Ok(Self { inner: client })
     }
 
-    pub async fn login(&self, params: LoginParameters) -> anyhow::Result<String> {
+    pub async fn login(&self, params: LoginParameters) -> anyhow::Result<SessionToken> {
         // Check if the email address in `params` is found in the database.
         let user = match self.get_user_by_email(params.email).await {
             Ok(u) => u,
@@ -122,7 +127,7 @@ impl Database {
         Ok(self.get_user_by_email(data.email).await?)
     }
 
-    pub async fn fetch_user(&self, session_token: String) -> anyhow::Result<FetchUser> {
+    pub async fn fetch_user(&self, session_token: SessionToken) -> anyhow::Result<FetchUser> {
         let user_id = match self.authorize(session_token).await {
             Ok(uid) => uid,
             Err(_) => return Err(anyhow::anyhow!("An invalid session token was provided.")),
@@ -137,7 +142,13 @@ impl Database {
         ))
     }
 
-    async fn authorize(&self, session_token: String) -> anyhow::Result<String> {
+    pub async fn log_out(&self, session_token: SessionToken) {
+        if let Err(e) = self.inner.execute("DELETE FROM session_tokens WHERE token = $1", &[&session_token]).await {
+            eprintln!("Error when trying to log out with session token {}: {}", session_token, e); 
+        }
+    }
+
+    async fn authorize(&self, session_token: SessionToken) -> anyhow::Result<String> {
         let rows = self
             .inner
             .query(

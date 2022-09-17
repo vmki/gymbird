@@ -38,6 +38,18 @@ const Home: React.FC = () => {
     })
   }
 
+  const logOut = async(token: string | null) => {
+    if(token !== null) {
+      await fetch(`${API_BASE_URL}/logout`, {
+          headers: {
+            'Authorization': token,
+          }
+      })
+      store.setToken(null);
+      setUser(null);
+    }
+  }
+
   const fetchUser = async(token: string) => {
     if(store.sessionToken !== null) {
       fetch(`${API_BASE_URL}/user`, {
@@ -60,13 +72,9 @@ const Home: React.FC = () => {
     setUser(JSON.parse(json));
   }
 
-  let main = user ? (
-    <div>
-      <h1>Hello {user.name}</h1>
-    </div>
-  ) : (
+  let main = (
     <main className={styles.main}>
-      <h1>Hello</h1>
+      <h1>Hello { user ? user.name : null}</h1>
       <button onClick={() => { setShowLogin(!showLogin) }}>Login</button>
       <button onClick={() => { setShowRegistration(!showRegistration) }}>Register</button>
 
@@ -102,6 +110,7 @@ const Home: React.FC = () => {
       </Head>
 
       <Navbar
+        onLogout={() => logOut(store.sessionToken) }
         onLogin={() => setShowLogin(true) }
         onRegister={() => setShowRegistration(true) }
       />

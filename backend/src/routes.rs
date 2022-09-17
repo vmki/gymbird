@@ -1,11 +1,13 @@
+use crate::error::Error;
 use crate::handlers::*;
 use crate::models::State;
 use warp::hyper::{header, Method, Request};
 use warp::{Filter, Rejection, Reply};
+use serde_json::json;
 
 pub fn routes(
     state: State,
-) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone + Send {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone + Send {
     let state = warp::any().map(move || state.clone());
 
     let login_path = warp::path("login")
@@ -25,6 +27,11 @@ pub fn routes(
         .and(state.clone())
         .and_then(fetch_user);
 
+    let log_out_path = warp::path("logout")
+        .and(warp::header("Authorization"))
+        .and(state.clone())
+        .and_then(log_out);
+
     let cors = warp::cors()
         .allow_any_origin()
         .allow_methods(&[Method::POST, Method::GET, Method::PUT])
@@ -32,6 +39,17 @@ pub fn routes(
         .allow_header("authorization");
 
     warp::path("api")
-        .and(login_path.or(registration_path).or(fetch_user_path))
+        .and(login_path.or(registration_path).or(fetch_user_path).or(log_out_path))
         .with(cors)
+        .recover(|err: Rejection| { async move {
+            if let Some(e) = err.find::<Error>() {
+                let error_message = e.to_string();
+
+                Ok(warp::reply::json(&json!({
+                    "error": error_message,
+                })))
+            } else {
+                Err(err)
+            } 
+        }})
 }

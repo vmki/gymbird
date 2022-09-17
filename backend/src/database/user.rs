@@ -1,8 +1,10 @@
-use tokio_postgres::Row;
-pub type UUID = String;
+use super::UUID;
 use serde::{Deserialize, Serialize};
+use tokio_postgres::Row;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Serialize, Deserialize,
+)]
 pub struct User {
     pub name: String,
     pub username: String,
