@@ -1,5 +1,5 @@
 use crate::database::{Credentials, Database};
-use crate::database::UUID;
+use crate::database::ID;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::sync::Arc;
@@ -42,7 +42,7 @@ pub struct RegistrationParameters {
 pub struct FetchUser {
     pub name: String,
     pub username: String,
-    pub user_id: UUID,
+    pub id: ID,
     pub email: String,
 }
 
@@ -51,7 +51,7 @@ impl From<&Row> for FetchUser {
         Self {
             name: data.get("name"),
             username: data.get("username"),
-            user_id: data.get("user_id"),
+            id: data.get("id"),
             email: data.get("email"),
         }
     }

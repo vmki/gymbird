@@ -1,7 +1,7 @@
-for await(let file of Deno.readDir("assets")) {
+for await(let file of Deno.readDir("../data")) {
   let p = Deno.run({
     cmd: ["magick",
-      `assets/${file.name}`,
+      `../data/${file.name}`,
       `-fuzz`, `2%`,
       `-fill`,
       `none`,
@@ -14,7 +14,7 @@ for await(let file of Deno.readDir("assets")) {
       `-level`,
       `50x100%`,
       `+channel`,
-      `assets/${file.name}`
+      `../data/${file.name}`
     ]
   });
 

@@ -27,7 +27,7 @@ for(let group of groups) {
     let exerciseName = url.slice(url.length - index, url.length).replace(".jpg", "").replace(".png", "") + ".png";
 
     let p = Deno.run({
-      cmd: ["curl", "--output", `assets/${exerciseName}`, url],
+      cmd: ["curl", "--output", `../data/${exerciseName}`, url],
     });
 
     await p.status();

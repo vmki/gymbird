@@ -5,20 +5,27 @@ interface NavbarProps {
   onLogin: () => void;
   onRegister: () => void;
   onLogout: () => void;
+  loggedIn: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onLogout })  => {
-  let store = useStore();
+const Navbar: React.FC<NavbarProps> = ({ onLogin, onRegister, onLogout, loggedIn })  => {
+  let buttons = loggedIn ? (
+    <div>
+      <button onClick={() => {
+        onLogin()
+      }}>Log in</button>
+      <button onClick={onRegister}>Register</button>
+    </div>
+  ) : (
+    <div>
+      <button onClick={onLogout}>Log out</button> 
+    </div>
+  )
 
   return (
     <div className={styles.navbar}>
       <p>Home</p>
-      <button onClick={() => {
-        console.log(store);
-        onLogin()
-      }}>Log in</button>
-      <button onClick={onRegister}>Register</button>
-      <button onClick={onLogout}>Log out</button>
+      { buttons }
     </div>
   )
 }

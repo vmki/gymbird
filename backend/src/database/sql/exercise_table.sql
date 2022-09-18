@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS exercises (
-workout_id TEXT NOT NULL,
-idx SMALLINT NOT NULL,
+id TEXT PRIMARY KEY,
 name TEXT NOT NULL,
-muscles_trained TEXT NOT NULL
+image_name TEXT NOT NULL
+-- muscles_trained TEXT NOT NULL
+-- Store some other information
 );

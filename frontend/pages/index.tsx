@@ -21,6 +21,10 @@ const Home: React.FC = () => {
     }
   }, [store.sessionToken])
 
+  useEffect(() => {
+    
+  }, [])
+
   const logOut = async(token: string | null) => {
     if(token !== null) {
       await fetch(`${API_BASE_URL}/logout`, {
@@ -46,8 +50,6 @@ const Home: React.FC = () => {
   let main = (
     <main className={styles.main}>
       <h1>Hello { user ? user.name : null}</h1>
-      <button onClick={() => { setShowLogin(!showLogin) }}>Login</button>
-      <button onClick={() => { setShowRegistration(!showRegistration) }}>Register</button>
 
       <div id="modal-root" />
 
@@ -82,6 +84,7 @@ const Home: React.FC = () => {
       </Head>
 
       <Navbar
+        loggedIn={store.sessionToken === null}
         onLogout={() => logOut(store.sessionToken) }
         onLogin={() => setShowLogin(true) }
         onRegister={() => setShowRegistration(true) }

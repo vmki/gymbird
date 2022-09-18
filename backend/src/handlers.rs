@@ -64,3 +64,11 @@ pub async fn log_out(
 
     Ok(warp::reply::reply())
 }
+
+pub async fn exercises(state: models::State) -> anyhow::Result<impl Reply, Rejection> {
+    let state = state.lock().await;
+
+    let exercises = state.get_all_exercises().await;
+
+    Ok(warp::reply::json(&serde_json::to_string(&exercises).unwrap()))
+}

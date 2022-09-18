@@ -4,6 +4,7 @@ use anyhow::Context;
 use tokio_postgres::{connect, NoTls};
 use uuid::Uuid;
 use crate::error::Result;
+use self::exercise::Exercise;
 
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -13,12 +14,14 @@ use argon2::{
 pub mod user;
 use user::*;
 
+pub mod exercise;
+
 const WORKOUT_TABLE_CREATION_STR: &str = include_str!("sql/workout_table.sql");
 const EXERCISE_TABLE_CREATION_STR: &str = include_str!("sql/exercise_table.sql");
 const USER_TABLE_CREATION_STR: &str = include_str!("sql/user_table.sql");
 const SESSION_TOKEN_TABLE_CREATION_STR: &str = include_str!("sql/session_token_table.sql");
 
-pub type UUID = String;
+pub type ID = String;
 pub type SessionToken = String;
 
 #[derive(Debug, Clone)]
@@ -66,7 +69,7 @@ impl Database {
         match Argon2::default().verify_password(params.password.as_bytes(), &parsed_hash) {
             // If it matches, generate a new session token, insert it into the database and return it.
             Ok(_) => {
-                let session_token = self.generate_session_token(&user.user_id).await;
+                let session_token = self.generate_session_token(&user.id).await;
                 return Ok(session_token);
             }
             Err(_) => return Err(Error::InvalidPassword),
@@ -95,6 +98,11 @@ impl Database {
             None => Err(Error::InvalidEmail),
         }
 
+    }
+
+    pub async fn get_all_exercises(&self) -> Vec<Exercise> {
+        self.inner.query("SELECT * FROM exercises;", &[])
+            .await.unwrap().iter().map(|row| Exercise::from(row)).collect()
     }
 
     pub async fn create_user(&self, data: RegistrationParameters) -> anyhow::Result<SessionToken> {
