@@ -11,6 +11,7 @@ const Exercise: React.FC<ExerciseProps> = (props: ExerciseProps) => {
     <div className={styles.exercise}>
       <h1>{ props.name }</h1>
       <img src={`assets/${props.image_name}`} />
+      <p>ID: {props.id}</p>
     </div>
   )
 } 

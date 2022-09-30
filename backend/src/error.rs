@@ -10,6 +10,7 @@ pub enum Error {
     InvalidPassword,
     InvalidEmail,
     InvalidSessionToken,
+    InvalidID,
     Argon2(argon2::Error),
     Database(#[from] tokio_postgres::Error),
 }
@@ -30,6 +31,7 @@ impl fmt::Display for Error {
             InvalidSessionToken => {
                 "An invalid session token was provided.".into()
             }
+            InvalidID => "An invalid ID was provided.".into(),
             Argon2(e) => e.to_string(),
             Database(e) => e.to_string(),
         };

@@ -72,3 +72,11 @@ pub async fn exercises(state: models::State) -> anyhow::Result<impl Reply, Rejec
 
     Ok(warp::reply::json(&serde_json::to_string(&exercises).unwrap()))
 }
+
+pub async fn get_exercise(data: String, state: models::State) -> anyhow::Result<impl Reply, Rejection> {
+    let state = state.lock().await;
+
+    let exercise = state.get_exercise(data).await?;
+
+    Ok(warp::reply::json(&serde_json::to_string(&exercise).unwrap()))
+}

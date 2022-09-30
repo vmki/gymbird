@@ -1,7 +1,8 @@
 import create from 'zustand';
-import { persist} from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 
 const useStore = create(
+  persist(
     set => ({
       sessionToken: null,
 
@@ -11,6 +12,7 @@ const useStore = create(
         }))
       }
     })
+  )
 );
 
 

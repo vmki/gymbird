@@ -16,7 +16,7 @@ impl From<&Row> for User {
         Self {
             name: data.get("name"),
             username: data.get("username"),
-            id: data.get("user_id"),
+            id: data.get("id"),
             email: data.get("email"),
             password: data.get("password"),
         }

@@ -36,6 +36,11 @@ pub fn routes(
         .and(state.clone())
         .and_then(exercises);
 
+    let get_exercise_path = warp::path("exercise")
+        .and(warp::path::param())
+        .and(state.clone())
+        .and_then(get_exercise);
+
     let cors = warp::cors()
         .allow_any_origin()
         .allow_methods(&[Method::POST, Method::GET, Method::PUT])
@@ -43,7 +48,7 @@ pub fn routes(
         .allow_header("authorization");
 
     warp::path("api")
-        .and(login_path.or(registration_path).or(fetch_user_path).or(log_out_path).or(exercises_path))
+        .and(login_path.or(registration_path).or(fetch_user_path).or(log_out_path).or(exercises_path).or(get_exercise_path))
         .with(cors)
         .recover(|err: Rejection| { async move {
             if let Some(e) = err.find::<Error>() {

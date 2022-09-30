@@ -105,6 +105,13 @@ impl Database {
             .await.unwrap().iter().map(|row| Exercise::from(row)).collect()
     }
 
+    pub async fn get_exercise(&self, id: ID) -> Result<Exercise> {
+        match self.inner.query("SELECT * FROM exercises WHERE id = $1", &[&id]).await {
+            Ok(rows) => Ok(Exercise::from(rows.first().unwrap().clone())),
+            Err(e) => Err(Error::InvalidID),
+        }
+    }
+
     pub async fn create_user(&self, data: RegistrationParameters) -> anyhow::Result<SessionToken> {
         let id = Uuid::new_v4().to_string();
 
@@ -117,7 +124,7 @@ impl Database {
 
         self.inner
             .query(
-                "INSERT INTO users (email, password, name, username, user_id) VALUES($1, $2, $3, $4, $5)",
+                "INSERT INTO users (email, password, name, username, id) VALUES($1, $2, $3, $4, $5)",
                 &[
                     &data.email,
                     &password_hash,
@@ -142,7 +149,7 @@ impl Database {
         Ok(FetchUser::from(
             &self
                 .inner
-                .query("SELECT * FROM users WHERE user_id = $1", &[&user_id])
+                .query("SELECT * FROM users WHERE id = $1", &[&user_id])
                 .await
                 .unwrap()[0],
         ))
